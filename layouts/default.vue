@@ -26,7 +26,7 @@
       <template v-slot:append>
         <div>
           <v-list-item v-for="item in parameterLogOutItems" :key="item.title" :prepend-icon="item.icon"
-            :title="item.title" :to="item.to" :value="item.title.toLowerCase()"></v-list-item>
+            :title="item.title" :value="item.title.toLowerCase()" @click="handleLogout"></v-list-item>
         </div>
       </template>
     </v-navigation-drawer>
@@ -54,13 +54,41 @@
 <script setup>
 import { useTheme } from 'vuetify'
 import { onMounted } from 'vue'
-
+const runtimeConfig = useRuntimeConfig()
+const router = useRouter()
 const theme = useTheme()
+
+const handleLogout = async () => {
+  try {
+    await $fetch(runtimeConfig.public.apiBase + "/colaborador/logout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        'x-api-key': runtimeConfig.public.apiKey
+      }
+    })
+    const token = useCookie('token')
+    token.value = null
+    if (process.client) {
+      window.localStorage.removeItem('theme')
+    }
+    await router.push('/login')
+  } catch (error) {
+    console.error("Error durante el logout:", error)
+    // Aún así, limpiamos todo y redirigimos al login
+    const token = useCookie('token')
+    token.value = null
+    if (process.client) {
+      window.localStorage.removeItem('theme')
+    }
+    await router.push('/login')
+  }
+}
 
 function toggleTheme() {
   const newTheme = theme.global.current.value.dark ? 'myCustomLightTheme' : 'dark'
   theme.global.name.value = newTheme
-  
+
   // Solo acceder a localStorage en el cliente
   if (process.client) {
     window.localStorage.setItem('theme', newTheme)
@@ -92,7 +120,6 @@ const parameterMenuItems = [
 const parameterLogOutItems = [
   {
     title: 'Cerrar Sesión',
-    to: '/login',
     icon: 'mdi-logout',
   },
 ]

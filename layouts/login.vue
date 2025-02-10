@@ -1,9 +1,15 @@
 <template>
-  <v-app>
+  <v-app :theme="'light'"> <!-- Forzamos el tema claro en el layout de login -->
     <v-main>
-      <v-container fluid class="fill-height">
-        <slot />
-      </v-container>
+      <slot />
     </v-main>
   </v-app>
 </template>
+
+<script setup>
+onMounted(() => {
+  if (process.client) {
+    window.localStorage.removeItem('theme')
+  }
+})
+</script>
