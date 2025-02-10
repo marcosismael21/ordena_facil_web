@@ -116,7 +116,7 @@ const handleLogin = async () => {
       isSnackbarVisible.value = true
 
       // Redireccionar
-      await router.replace(route.query.to ?? "/")
+      await router.replace(route.query.to ?? "/caja")
     } else {
       snackbarColor.value = "error"
       snackbarMessage.value = response.mensage || "Error al iniciar sesión"
