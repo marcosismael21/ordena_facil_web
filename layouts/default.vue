@@ -108,13 +108,11 @@ onMounted(() => {
 const regularMenuItems = [
   { title: 'Inicio', to: '/', icon: 'mdi-home' },
   { title: 'Colaboradores', to: 'colaborador', icon: 'mdi-account-multiple' },
-  { title: 'Menu', to: 'menu', icon: 'mdi-menu' }
+  { title: 'Menú', to: 'menu', icon: 'mdi-food' }
 ]
 
 const parameterMenuItems = [
-  { title: 'Usuarios', to: '/parametros/usuarios', icon: 'mdi-account-cog' },
-  { title: 'Roles', to: '/parametros/roles', icon: 'mdi-shield-account' },
-  { title: 'Configuración', to: '/parametros/configuracion', icon: 'mdi-tune' }
+  { title: 'Tipos de Platillos', to: '/tipoPlatillo', icon: 'mdi-food-fork-drink' },
 ]
 
 const parameterLogOutItems = [
