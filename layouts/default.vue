@@ -16,11 +16,18 @@
         <!-- Grupo de Parámetros -->
         <v-list-group value="Parametros">
           <template v-slot:activator="{ props }">
-            <v-list-item v-bind="props" prepend-icon="mdi-cog" title="Parámetros"></v-list-item>
+            <v-list-item v-bind="props" prepend-icon="mdi-cog" title="Parámetros" class="parameter-group"></v-list-item>
           </template>
 
           <v-list-item v-for="subItem in parameterMenuItems" :key="subItem.title" :prepend-icon="subItem.icon"
-            :title="subItem.title" :to="subItem.to" :value="subItem.title.toLowerCase()"></v-list-item>
+            :title="subItem.title" :to="subItem.to" :value="subItem.title.toLowerCase()" class="parameter-item">
+            <template v-slot:prepend>
+              <v-icon size="20" class="me-2">{{ subItem.icon }}</v-icon>
+            </template>
+            <template v-slot:title>
+              <span class="text-truncate" style="max-width: 180px">{{ subItem.title }}</span>
+            </template>
+          </v-list-item>
         </v-list-group>
       </v-list>
       <template v-slot:append>
@@ -114,9 +121,9 @@ const regularMenuItems = [
 
 const parameterMenuItems = [
   { title: 'Tipos de Platillos', to: 'tipoPlatillo', icon: 'mdi-food-fork-drink' },
-  { title: 'Proveedores', to: 'proveedor', icon: 'mdi-garage' },
-  { title: 'Categorias', to: 'categoria', icon: 'mdi-food-fork-drink' },
-  { title: 'Tipos de Medidas', to: 'tipoMedida', icon: 'mdi-weight-kilogram' },
+  { title: 'Proveedores', to: 'proveedor', icon: 'mdi-truck-delivery' },
+  { title: 'Categorías de Prouductos', to: 'categoria', icon: 'mdi-shape-outline' },
+  { title: 'Tipos de Medidas', to: 'tipoMedida', icon: 'mdi-scale' },
 ]
 
 const parameterLogOutItems = [
@@ -135,7 +142,6 @@ const links = [
 ]
 </script>
 
-
 <style scoped>
 .v-btn--icon {
   transition: transform 0.2s ease-in-out;
@@ -143,5 +149,34 @@ const links = [
 
 .v-btn--icon:hover {
   transform: scale(1.1);
+}
+
+:deep(.parameter-group) {
+  margin-bottom: 4px;
+}
+
+:deep(.parameter-item) {
+  padding-left: 12px !important;
+  min-height: 40px !important;
+}
+
+:deep(.v-list-group__items .v-list-item) {
+  padding-left: 16px;
+}
+
+:deep(.v-list-group--prepend) {
+  padding-inline-start: 0px !important;
+}
+
+:deep(.v-list-item--active) {
+  background-color: rgb(var(--v-theme-primary), 0.1) !important;
+}
+
+:deep(.v-list-item--active::before) {
+  opacity: 0 !important;
+}
+
+:deep(.v-list-group__items .v-icon) {
+  opacity: 0.8;
 }
 </style>
