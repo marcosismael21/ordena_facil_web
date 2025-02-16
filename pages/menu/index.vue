@@ -209,12 +209,14 @@ const handleDelete = async () => {
       await getData()
       closeDialog()
     } else {
-      throw new Error(response.message)
+      throw new Error(response.message || "Error al eliminar el platillo")
     }
-  } catch (e) {
+  } catch (error) {
     snackbarColor.value = "error"
-    snackbarMessage.value = e.message || "Error al eliminar el platillo"
+    snackbarMessage.value = error.data.message || "Error al eliminar el platillo"
     isSnackbarVisible.value = true
+  } finally {
+    closeDialog()
   }
 }
 
