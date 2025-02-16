@@ -342,10 +342,12 @@ const handleDelete = async () => {
     } else {
       throw new Error(response.message)
     }
-  } catch (e) {
+  } catch (error) {
     snackbarColor.value = "error"
-    snackbarMessage.value = e.message || "Error al eliminar la categoría"
+    snackbarMessage.value = error.data.message || "Error al eliminar la categoría"
     isSnackbarVisible.value = true
+  } finally {
+    closeDialog()
   }
 }
 

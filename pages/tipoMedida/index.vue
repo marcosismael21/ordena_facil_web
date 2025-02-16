@@ -342,10 +342,12 @@ const handleDelete = async () => {
     } else {
       throw new Error(response.message)
     }
-  } catch (e) {
+  } catch (error) {
     snackbarColor.value = "error"
-    snackbarMessage.value = e.message || "Error al actualizar el tipo de medida"
+    snackbarMessage.value = error.data.message || "Error al actualizar el tipo de medida"
     isSnackbarVisible.value = true
+  } finally {
+    closeDialog()
   }
 }
 
