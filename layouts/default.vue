@@ -113,7 +113,7 @@ onMounted(() => {
 })
 
 const regularMenuItems = [
-  { title: 'Caja', to: '', icon: 'mdi-cash-register' },
+  { title: 'Caja', to: '/caja', icon: 'mdi-cash-register' },
   { title: 'Inventario', to: '/inventario', icon: 'mdi-silverware' },
   { title: 'Menú', to: '/menu', icon: 'mdi-food' },
   { title: 'Colaboradores', to: '/colaborador', icon: 'mdi-account-multiple' },
