@@ -74,6 +74,10 @@
         </v-container>
       </v-col>
     </v-row>
+
+    <v-snackbar v-model="isSnackbarVisible" :color="snackbarColor" timeout="3000" location="top">
+      {{ snackbarMessage }}
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -93,10 +97,48 @@ const form = ref(null)
 const orderItems = ref([])
 const discount = ref(0)
 
+const formData = ref({
+  //valores de pedido
+  clienteId: 1, // Por ahora hardcodeado, después se puede hacer dinámico
+  colaboradorId: 2, // Por ahora hardcodeado, después se puede hacer dinámico
+  tipoPedidoId: 1, // Por ahora hardcodeado para restaurante
+  direccionId: null,
+  descuentoPedido: 0,
+  //valores de pedido detalle
+  platilloIds: [],
+  cantidadPedidoDetalles: [],
+  precioUnitarioPedidoDetalles: [],
+  contExtras: [],
+  //valores de extra
+  productoIds: [],
+  cantidadExtras: [],
+  precioUnitarioExtras: []
+})
+
+// Función para resetear el formulario
+const resetForm = () => {
+  formData.value = {
+    clienteId: 1,
+    colaboradorId: 2,
+    tipoPedidoId: 1,
+    direccionId: null,
+    descuentoPedido: 0,
+    platilloIds: [],
+    cantidadPedidoDetalles: [],
+    precioUnitarioPedidoDetalles: [],
+    contExtras: [],
+    productoIds: [],
+    cantidadExtras: [],
+    precioUnitarioExtras: []
+  }
+  orderItems.value = []
+  discount.value = 0
+}
+
 // Filter items based on search
 const filteredItems = computed(() => {
   if (!search.value) return datos.value
-  return datos.value.filter(item => 
+  return datos.value.filter(item =>
     item.nombre.toLowerCase().includes(search.value.toLowerCase()) ||
     item.descripcion.toLowerCase().includes(search.value.toLowerCase())
   )
@@ -104,7 +146,7 @@ const filteredItems = computed(() => {
 
 // Calculate totals
 const subtotal = computed(() => {
-  return orderItems.value.reduce((acc, item) => 
+  return orderItems.value.reduce((acc, item) =>
     acc + (parseFloat(item.precio) * item.quantity), 0
   )
 })
@@ -118,18 +160,63 @@ const addToOrder = (item) => {
   const existingItem = orderItems.value.find(i => i.id === item.id)
   if (existingItem) {
     existingItem.quantity++
+    // Encontrar el índice del item existente
+    const index = formData.value.platilloIds.indexOf(item.id)
+    if (index !== -1) {
+      formData.value.cantidadPedidoDetalles[index]++
+    }
   } else {
     orderItems.value.push({
       ...item,
       quantity: 1
     })
+    // Agregar nuevo item al formData
+    formData.value.platilloIds.push(item.id)
+    formData.value.cantidadPedidoDetalles.push(1)
+    formData.value.precioUnitarioPedidoDetalles.push(parseFloat(item.precio))
+    formData.value.contExtras.push(0) // Por ahora sin extras
   }
 }
 
-// Send order to kitchen
+const handleCreate = async () => {
+  if (orderItems.value.length === 0) {
+    snackbarColor.value = "error"
+    snackbarMessage.value = "Debe agregar al menos un platillo a la orden"
+    isSnackbarVisible.value = true
+    return
+  }
+
+  try {
+    // Actualizar el descuento antes de enviar
+    formData.value.descuentoPedido = discount.value
+
+    const response = await $fetch(runtimeConfig.public.apiBase + "/pedido", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": runtimeConfig.public.apiKey,
+        "Authorization": `Bearer ${token}`,
+      },
+      body: formData.value
+    })
+
+    if (response.success) {
+      snackbarColor.value = "success"
+      snackbarMessage.value = "Pedido creado exitosamente"
+      isSnackbarVisible.value = true
+      resetForm() // Limpiar el formulario después de crear el pedido
+    } else {
+      throw new Error(response.message)
+    }
+  } catch (e) {
+    snackbarColor.value = "error"
+    snackbarMessage.value = e.message || "Error al crear el pedido"
+    isSnackbarVisible.value = true
+  }
+}
+
 const sendToKitchen = () => {
-  // Implement your kitchen order logic here
-  console.log('Sending to kitchen:', orderItems.value)
+  handleCreate()
 }
 
 const getData = async () => {
