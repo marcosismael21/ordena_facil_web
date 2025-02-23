@@ -233,7 +233,7 @@ const getData = async () => {
   } catch (e) {
     error.value = e
     snackbarColor.value = "error"
-    snackbarMessage.value = e.message || "Error al cargar los datos"
+    snackbarMessage.value =  e.data.message || "Error al cargar los datos"
     isSnackbarVisible.value = true
   }
 }
@@ -274,7 +274,7 @@ const handleCreate = async () => {
     }
   } catch (e) {
     snackbarColor.value = "error"
-    snackbarMessage.value = e.message || "Error al crear la categoría"
+    snackbarMessage.value =  e.data.message || "Error al crear la categoría"
     isSnackbarVisible.value = true
   }
 }
@@ -311,7 +311,7 @@ const handleUpdate = async () => {
     }
   } catch (e) {
     snackbarColor.value = "error"
-    snackbarMessage.value = e.message || "Error al actualizar la categoría"
+    snackbarMessage.value =  e.data.message || "Error al actualizar la categoría"
     isSnackbarVisible.value = true
   }
 }
@@ -375,7 +375,7 @@ const editItem = async (id) => {
     }
   } catch (e) {
     snackbarColor.value = "error"
-    snackbarMessage.value = e.message || "Error al cargar los datos la categoría"
+    snackbarMessage.value =  e.data.message || "Error al cargar los datos la categoría"
     isSnackbarVisible.value = true
   }
 }
