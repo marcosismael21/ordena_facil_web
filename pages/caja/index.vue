@@ -2,7 +2,7 @@
   <v-container fluid class="pa-2" style="height: calc(100vh - 48px)">
     <v-row no-gutters style="height: 100%;">
       <!-- Sección 1: Pedidos Pendientes -->
-      <v-col cols="2" class="border-r px-2">
+      <v-col cols="2" class="border-r px-2 bg-section-background">
         <div class="d-flex flex-column h-100">
           <div class="px-4 pt-4">
             <h2 class="text-h6 mb-2">Pedidos Pendientes</h2>
@@ -29,7 +29,7 @@
       </v-col>
 
       <!-- Sección 2: Lista de Platillos (más ancha) -->
-      <v-col cols="7" class="px-2">
+      <v-col cols="7" class="px-2 ">
         <div class="d-flex flex-column h-100">
           <div class="px-4 pt-4">
             <div class="d-flex align-center mb-2">
@@ -61,38 +61,63 @@
       </v-col>
 
       <!-- Sección 3: Resumen de Orden -->
-      <v-col cols="3" class="bg-grey-lighten-4 px-2">
+      <v-col cols="3" class="px-4 bg-section-background">
         <div class="d-flex flex-column h-100">
-          <div class="px-2 pt-2">
-            <div class="d-flex align-center mb-2">
+          <div class="px-2 pt-4">
+            <div class="d-flex align-center mb-4">
               <h2 class="text-h6">Orden Actual</h2>
               <v-spacer></v-spacer>
               <v-btn density="compact" variant="text" icon="mdi-account-plus"
                 @click="dialogNuevoCliente = true"></v-btn>
             </div>
 
-            <div class="d-flex gap-2 mb-2">
-              <v-select v-model="formData.clienteId" :items="clientes" item-title="nombres" item-value="id"
-                placeholder="Seleccionar cliente" density="compact" hide-details class="flex-grow-1">
-                <template v-slot:prepend-inner>
-                  <v-icon size="small">mdi-account</v-icon>
-                </template>
-              </v-select>
-
-              <v-select v-model="formData.tipoPedidoId" :items="tPedidos" item-title="descripcion" item-value="id"
-                placeholder="Tipo" density="compact" hide-details style="max-width: 150px;"></v-select>
+            <div class="d-flex flex-column gap-2 mb-4 px-2">
+              <div>
+                <div class="text-subtitle-2 mb-1">Cliente</div>
+                <v-autocomplete v-model="formData.clienteId" :items="clientes" item-title="nombres" item-value="id"
+                  placeholder="Seleccionar cliente" density="compact" hide-details class="mb-2"
+                  :search-input.sync="searchCliente" :filter="filterClientes" return-object
+                  @update:search="searchCliente = $event" bg-color="transparent">
+                  <template v-slot:prepend-inner>
+                    <v-icon size="small">mdi-account</v-icon>
+                  </template>
+                  <template v-slot:item="{ props, item }">
+                    <v-list-item v-bind="props">
+                      <v-list-item-subtitle>DNI: {{ item.raw.dni }}</v-list-item-subtitle>
+                    </v-list-item>
+                  </template>
+                </v-autocomplete>
+                <div>
+                  <div class="text-subtitle-2 mb-1">Tipo de Pedido</div>
+                  <v-select v-model="formData.tipoPedidoId" :items="tPedidos" item-title="descripcion" item-value="id"
+                    placeholder="Tipo" density="compact" hide-details bg-color="transparent">
+                  </v-select>
+                </div>
+              </div>
             </div>
           </div>
 
           <div class="flex-grow-1 overflow-y-auto px-2">
             <v-list density="compact">
-              <v-list-item v-for="(item, index) in orderItems" :key="index" class="mb-1">
+              <v-list-item v-for="(item, index) in orderItems" :key="index" class="mb-2">
+                <template v-slot:prepend>
+                  <v-btn icon="mdi-delete" variant="text" density="compact" color="error"
+                    @click="removeFromOrder(index)"></v-btn>
+                </template>
                 <v-list-item-title class="text-subtitle-2">
-                  {{ item.nombre }} x{{ item.quantity }}
+                  {{ item.nombre }}
                 </v-list-item-title>
-                <v-list-item-subtitle class="d-flex justify-space-between">
-                  <span>${{ item.precio }}</span>
-                  <span>${{ item.precio * item.quantity }}</span>
+                <v-list-item-subtitle>
+                  <div class="d-flex justify-space-between align-center mt-1">
+                    <span>${{ item.precio }}</span>
+                    <div class="d-flex align-center">
+                      <v-btn icon="mdi-minus" variant="text" density="compact" :disabled="item.quantity <= 1"
+                        @click="decrementQuantity(index)"></v-btn>
+                      <span class="mx-2">{{ item.quantity }}</span>
+                      <v-btn icon="mdi-plus" variant="text" density="compact" @click="incrementQuantity(index)"></v-btn>
+                    </div>
+                    <span>${{ item.precio * item.quantity }}</span>
+                  </div>
                 </v-list-item-subtitle>
               </v-list-item>
             </v-list>
@@ -137,7 +162,7 @@
                     v => !!v || 'El nombre es requerido',
                     v => /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(v) || 'Solo se permiten letras',
                     v => v?.length >= 3 || 'El nombre debe tener al menos 3 caracteres'
-                  ]">
+                  ]" variant="outlined">
                 </v-text-field>
               </v-col>
               <v-col cols="6">
@@ -147,7 +172,7 @@
                     v => /^\d+$/.test(v) || 'Solo se permiten números',
                     v => v?.length >= 13 || 'El número debe tener 13 dígitos',
                     v => v?.length <= 13 || 'El número debe tener 13 dígitos'
-                  ]">
+                  ]" variant="outlined">
                 </v-text-field>
               </v-col>
               <v-col cols="6">
@@ -156,7 +181,7 @@
                   v => /^\d+$/.test(v) || 'Solo se permiten números',
                   v => v?.length >= 8 || 'El teléfono debe tener al menos 8 dígitos',
                   v => v?.length <= 8 || 'El teléfono debe tener 8 dígitos'
-                ]">
+                ]" variant="outlined">
                 </v-text-field>
               </v-col>
               <v-col cols="6">
@@ -165,7 +190,7 @@
                     v => !!v || 'El correo es requerido',
                     v => /.+@.+\..+/.test(v) || 'Ingrese un correo válido',
                     v => v?.length <= 50 || 'El correo no debe exceder 50 caracteres'
-                  ]">
+                  ]" variant="outlined">
                 </v-text-field>
               </v-col>
             </v-row>
@@ -191,6 +216,7 @@ const token = tokenCookie.value
 
 const search = ref('')
 const searchPending = ref('')
+const searchCliente = ref('')
 const datos = ref([])
 const tPedidos = ref([])
 const pedidosPendientes = ref([])
@@ -201,6 +227,7 @@ const snackbarColor = ref("success")
 const dialogNuevoCliente = ref(false)
 const formNewClient = ref(null)
 const clientes = ref([])
+const tipoPlatillos = ref([])
 
 const orderItems = ref([])
 const discount = ref(0)
@@ -209,7 +236,7 @@ const formData = ref({
   //valores de pedido
   clienteId: 1, // Por ahora hardcodeado, después se puede hacer dinámico
   colaboradorId: 2, // Por ahora hardcodeado, después se puede hacer dinámico
-  tipoPedidoId: '',
+  tipoPedidoId: 1,
   direccionId: null,
   descuentoPedido: 0,
   //valores de pedido detalle
@@ -235,7 +262,7 @@ const resetForm = () => {
   formData.value = {
     clienteId: 1,
     colaboradorId: 2,
-    tipoPedidoId: '',
+    tipoPedidoId: 1,
     direccionId: null,
     descuentoPedido: 0,
     platilloIds: [],
@@ -282,12 +309,26 @@ const total = computed(() => {
 
 const filteredPendingOrders = computed(() => {
   if (!searchPending.value) return pedidosPendientes.value
-  const searchTerm = searchPending.value.toLowerCase()
-  return pedidosPendientes.value.filter(pedido =>
-    pedido.numeroOrden.toLowerCase().includes(searchTerm) ||
-    pedido.nombreCliente.toLowerCase().includes(searchTerm)
-  )
+
+  const searchTerm = searchPending.value.toLowerCase().trim()
+  return pedidosPendientes.value.filter(pedido => {
+    return (
+      pedido.numeroOrden.toLowerCase().includes(searchTerm) ||
+      pedido.nombreCliente.toLowerCase().includes(searchTerm) ||
+      pedido.dni.toLowerCase().includes(searchTerm)
+    )
+  })
 })
+
+const filterClientes = (item, query) => {
+  if (!query) return true
+
+  const searchTerm = query.toLowerCase().trim()
+  return (
+    item.nombres.toLowerCase().includes(searchTerm) ||
+    item.dni.toLowerCase().includes(searchTerm)
+  )
+}
 
 const selectPendingOrder = async (pedido) => {
   // Por ahora solo mostraremos un mensaje
@@ -322,6 +363,20 @@ const handleCreate = async () => {
   if (orderItems.value.length === 0) {
     snackbarColor.value = "error"
     snackbarMessage.value = "Debe agregar al menos un platillo a la orden"
+    isSnackbarVisible.value = true
+    return
+  }
+
+  if (!formData.value.tipoPedidoId) {
+    snackbarColor.value = "error"
+    snackbarMessage.value = "Debe seleccionar un tipo de pedido"
+    isSnackbarVisible.value = true
+    return
+  }
+
+  if (!formData.value.clienteId) {
+    snackbarColor.value = "error"
+    snackbarMessage.value = "Debe seleccionar un cliente"
     isSnackbarVisible.value = true
     return
   }
@@ -383,13 +438,52 @@ const handleCreateClient = async () => {
     }
   } catch (e) {
     snackbarColor.value = "error"
-    snackbarMessage.value =  e.data.message || "Error al crear el cliente"
+    snackbarMessage.value = e.data.message || "Error al crear el cliente"
     isSnackbarVisible.value = true
   }
 }
 
 const sendToKitchen = () => {
   handleCreate()
+}
+
+const incrementQuantity = (index) => {
+  orderItems.value[index].quantity++
+  const itemId = orderItems.value[index].id
+  const formIndex = formData.value.platilloIds.indexOf(itemId)
+  if (formIndex !== -1) {
+    formData.value.cantidadPedidoDetalles[formIndex]++
+  }
+}
+
+const decrementQuantity = (index) => {
+  if (orderItems.value[index].quantity > 1) {
+    orderItems.value[index].quantity--
+    const itemId = orderItems.value[index].id
+    const formIndex = formData.value.platilloIds.indexOf(itemId)
+    if (formIndex !== -1) {
+      formData.value.cantidadPedidoDetalles[formIndex]--
+    }
+  }
+}
+
+const removeFromOrder = (index) => {
+  // Obtener el ID del platillo antes de eliminarlo
+  const itemId = orderItems.value[index].id
+
+  // Encontrar el índice en formData
+  const formIndex = formData.value.platilloIds.indexOf(itemId)
+
+  // Eliminar el item de orderItems
+  orderItems.value.splice(index, 1)
+
+  // Eliminar los datos correspondientes de formData
+  if (formIndex !== -1) {
+    formData.value.platilloIds.splice(formIndex, 1)
+    formData.value.cantidadPedidoDetalles.splice(formIndex, 1)
+    formData.value.precioUnitarioPedidoDetalles.splice(formIndex, 1)
+    formData.value.contExtras.splice(formIndex, 1)
+  }
 }
 
 const getData = async () => {
@@ -415,7 +509,7 @@ const getData = async () => {
   } catch (e) {
     error.value = e
     snackbarColor.value = "error"
-    snackbarMessage.value =  e.data.message || "Error al cargar los datos"
+    snackbarMessage.value = e.data.message || "Error al cargar los datos"
     isSnackbarVisible.value = true
   }
 }
@@ -440,13 +534,22 @@ const getDataSelect = async () => {
       }
     })
 
+    const getTipoPlatillo = await $fetch(runtimeConfig.public.apiBase + "/tipoPlatillo", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": runtimeConfig.public.apiKey,
+        "Authorization": `Bearer ${token}`,
+      }
+    })
 
     tPedidos.value = getTipoPedido.data
+    tipoPlatillos.value = getTipoPlatillo.data
     pedidosPendientes.value = getPedidoPendiente.data
   } catch (e) {
     error.value = e
     snackbarColor.value = "error"
-    snackbarMessage.value =  e.data.message || "Error al cargar los datos"
+    snackbarMessage.value = e.data.message || "Error al cargar los datos"
     isSnackbarVisible.value = true
 
   }
@@ -460,11 +563,15 @@ const dataRefs = {
 }
 
 Object.entries(dataRefs).forEach(([key, ref]) => {
-  watch(ref, (nuevos, viejos) => {
-    if (viejos.length === 0) {
-      ref.value = filtrarElementosActivos(nuevos)
+  watch(ref, (nuevos) => {
+    if (nuevos && Array.isArray(nuevos)) {
+      setTimeout(() => {
+        ref.value = nuevos.filter(element =>
+          element && typeof element.estado !== 'undefined' && element.estado !== false
+        )
+      }, 0)
     }
-  })
+  }, { deep: true })
 })
 
 const refreshPendingOrders = async () => {
