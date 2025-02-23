@@ -86,7 +86,7 @@
                 <div class="text-subtitle-2 mb-1">Cliente</div>
                 <v-autocomplete v-model="formData.clienteId" :items="clientes" item-title="nombres" item-value="id"
                   placeholder="Seleccionar cliente" density="compact" hide-details class="mb-2"
-                  :search-input.sync="searchCliente" :filter="filterClientes" return-object
+                  :search-input.sync="searchCliente" :filter="filterClientes"
                   @update:search="searchCliente = $event" bg-color="transparent">
                   <template v-slot:prepend-inner>
                     <v-icon size="small">mdi-account</v-icon>
@@ -222,7 +222,9 @@
 <script setup>
 const runtimeConfig = useRuntimeConfig()
 const tokenCookie = useCookie('token')
+const colaboradorIdCookie = useCookie('colaboradorId')
 const token = tokenCookie.value
+const colaboradorId = colaboradorIdCookie.value
 
 const search = ref('')
 const searchPending = ref('')
@@ -246,7 +248,7 @@ const discount = ref(0)
 const formData = ref({
   //valores de pedido
   clienteId: 1,
-  colaboradorId: 2,
+  colaboradorId: colaboradorId,
   tipoPedidoId: 1,
   direccionId: null,
   descuentoPedido: 0,
@@ -272,7 +274,7 @@ const nuevoCliente = ref({
 const resetForm = () => {
   formData.value = {
     clienteId: 1,
-    colaboradorId: 2,
+    colaboradorId: colaboradorId,
     tipoPedidoId: 1,
     direccionId: null,
     descuentoPedido: 0,

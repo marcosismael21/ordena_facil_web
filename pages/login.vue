@@ -110,6 +110,9 @@ const handleLogin = async () => {
       const token = useCookie('token')
       token.value = response.token
 
+      const colaboradorId = useCookie('colaboradorId')
+      colaboradorId.value = response.userData.id
+
       // Mostrar mensaje de éxito
       snackbarColor.value = "success"
       snackbarMessage.value = "¡Inicio de sesión exitoso!"
