@@ -32,6 +32,11 @@
       </v-list>
       <template v-slot:append>
         <div>
+          <v-list-item class="brand-text">
+            <v-list-item-title class="text-center text-caption font-weight-bold">
+              OrdenaFacil by MR SOLUTIONS <br> © {{ new Date().getFullYear() }}
+            </v-list-item-title>
+          </v-list-item>
           <v-list-item v-for="item in parameterLogOutItems" :key="item.title" :prepend-icon="item.icon"
             :title="item.title" :value="item.title.toLowerCase()" @click="handleLogout"></v-list-item>
         </div>
@@ -46,15 +51,10 @@
       </v-btn>
     </v-app-bar>
 
-    <v-main style="min-height: 300px;">
-      <v-container>
-        <slot />
-      </v-container>
+    <v-main>
+      <slot />
     </v-main>
 
-    <v-footer app class="bg-grey-lighten-1">
-      <span>MR SOLUTION&copy; {{ new Date().getFullYear() }}</span>
-    </v-footer>
   </v-layout>
 </template>
 
