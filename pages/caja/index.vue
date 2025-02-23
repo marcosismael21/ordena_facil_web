@@ -1,8 +1,8 @@
 <template>
   <v-container fluid class="pa-2" style="height: calc(100vh - 48px)">
-    <v-row no-gutters style="height: 100%;">
+    <v-row no-gutters class="fill-height">
       <!-- Sección 1: Pedidos Pendientes -->
-      <v-col cols="2" class="border-r px-2 bg-section-background">
+      <v-col cols="2" class="border-r section-height px-2 bg-section-background">
         <div class="d-flex flex-column h-100">
           <div class="px-4 pt-4">
             <h2 class="text-h6 mb-2">Pedidos Pendientes</h2>
@@ -29,22 +29,32 @@
       </v-col>
 
       <!-- Sección 2: Lista de Platillos (más ancha) -->
-      <v-col cols="7" class="px-2 ">
+      <v-col cols="7" class="px-2 section-height">
         <div class="d-flex flex-column h-100">
-          <div class="px-4 pt-4">
+          <div class="px-4 pt-4 section-header">
             <div class="d-flex align-center mb-2">
               <h2 class="text-h6">Menú</h2>
               <v-spacer></v-spacer>
               <v-text-field v-model="search" prepend-inner-icon="mdi-magnify" label="Buscar platillo" single-line
                 variant="outlined" hide-details density="compact" style="max-width: 300px"></v-text-field>
             </div>
+            <v-row no-gutters class="mb-2">
+              <v-col v-for="tipo in tipoPlatillos" :key="tipo.id" :cols="12" :sm="6"
+                :md="Math.max(3, Math.floor(12 / tipoPlatillos.length))" class="pa-1">
+                <v-btn block :color="selectedTipoPlatillo === tipo.id ? 'primary' : undefined"
+                  :variant="selectedTipoPlatillo === tipo.id ? 'flat' : 'outlined'" @click="toggleFilter(tipo.id)"
+                  class="text-none" height="42">
+                  {{ tipo.descripcion }}
+                </v-btn>
+              </v-col>
+            </v-row>
           </div>
 
-          <div class="flex-grow-1 overflow-y-auto px-2">
+          <div class="flex-grow-1 overflow-y-auto px-2 ">
             <v-row>
-              <v-col v-for="item in filteredItems" :key="item.id" cols="12" sm="6" lg="4">
+              <v-col v-for="item in filteredItems" :key="item.id" cols="12" sm="6">
                 <v-card @click="addToOrder(item)" class="h-100" elevation="2" hover>
-                  <v-img :src="item.imageUrl" height="180" cover class="align-end">
+                  <v-img :src="item.imageUrl" height="250" cover class="align-end">
                     <v-card-title class="text-white bg-black bg-opacity-50 px-4 py-2">
                       {{ item.nombre }}
                     </v-card-title>
@@ -61,7 +71,7 @@
       </v-col>
 
       <!-- Sección 3: Resumen de Orden -->
-      <v-col cols="3" class="px-4 bg-section-background">
+      <v-col cols="3" class="px-4 bg-section-background section-height">
         <div class="d-flex flex-column h-100">
           <div class="px-2 pt-4">
             <div class="d-flex align-center mb-4">
@@ -97,7 +107,7 @@
             </div>
           </div>
 
-          <div class="flex-grow-1 overflow-y-auto px-2">
+          <div class="flex-grow-1 overflow-y-auto section-content px-2">
             <v-list density="compact">
               <v-list-item v-for="(item, index) in orderItems" :key="index" class="mb-2">
                 <template v-slot:prepend>
@@ -228,14 +238,15 @@ const dialogNuevoCliente = ref(false)
 const formNewClient = ref(null)
 const clientes = ref([])
 const tipoPlatillos = ref([])
+const selectedTipoPlatillo = ref(null)
 
 const orderItems = ref([])
 const discount = ref(0)
 
 const formData = ref({
   //valores de pedido
-  clienteId: 1, // Por ahora hardcodeado, después se puede hacer dinámico
-  colaboradorId: 2, // Por ahora hardcodeado, después se puede hacer dinámico
+  clienteId: 1,
+  colaboradorId: 2,
   tipoPedidoId: 1,
   direccionId: null,
   descuentoPedido: 0,
@@ -289,12 +300,29 @@ const resetFormCliente = () => {
 
 // Filter items based on search
 const filteredItems = computed(() => {
-  if (!search.value) return datos.value
-  return datos.value.filter(item =>
-    item.nombre.toLowerCase().includes(search.value.toLowerCase()) ||
-    item.descripcion.toLowerCase().includes(search.value.toLowerCase())
-  )
+  let items = datos.value
+
+  if (selectedTipoPlatillo.value) {
+    items = items.filter(item => item.tipoPlatilloId === selectedTipoPlatillo.value)
+  }
+
+  if (search.value) {
+    items = items.filter(item =>
+      item.nombre.toLowerCase().includes(search.value.toLowerCase()) ||
+      item.descripcion.toLowerCase().includes(search.value.toLowerCase())
+    )
+  }
+
+  return items
 })
+
+const toggleFilter = (tipoPlatilloId) => {
+  if (selectedTipoPlatillo.value === tipoPlatilloId) {
+    selectedTipoPlatillo.value = null
+  } else {
+    selectedTipoPlatillo.value = tipoPlatilloId
+  }
+}
 
 // Calculate totals
 const subtotal = computed(() => {
@@ -546,6 +574,10 @@ const getDataSelect = async () => {
     tPedidos.value = getTipoPedido.data
     tipoPlatillos.value = getTipoPlatillo.data
     pedidosPendientes.value = getPedidoPendiente.data
+
+    if (tipoPlatillos.value && tipoPlatillos.value.length > 0) {
+      selectedTipoPlatillo.value = tipoPlatillos.value[0].id
+    }
   } catch (e) {
     error.value = e
     snackbarColor.value = "error"
@@ -559,7 +591,8 @@ const filtrarElementosActivos = (array) => array.filter(element => element.estad
 
 const dataRefs = {
   tPedidos,
-  clientes
+  clientes,
+  tipoPlatillos,
 }
 
 Object.entries(dataRefs).forEach(([key, ref]) => {
@@ -620,7 +653,55 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.v-container {
-  max-width: 100%;
+.section-height {
+  height: calc(100vh - 48px) !important;
+  max-height: calc(100vh - 48px) !important;
+  overflow: hidden;
+  padding: 0 12px !important;
+}
+
+.section-header {
+  position: sticky;
+  top: 0;
+  background-color: rgb(var(--v-theme-surface));
+  z-index: 1;
+  padding: 16px !important;
+  margin: 0 -12px;
+}
+
+.section-content {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px 0;
+}
+
+.section-content .v-row {
+  margin: 0 -8px;
+}
+
+.section-content .v-col {
+  padding: 8px;
+}
+
+.section-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.section-content::-webkit-scrollbar-track {
+  background: rgba(var(--v-theme-surface-variant), 0.1);
+}
+
+.section-content::-webkit-scrollbar-thumb {
+  background: rgba(var(--v-theme-primary), 0.3);
+  border-radius: 4px;
+}
+
+.section-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--v-theme-primary), 0.5);
+}
+
+.v-card {
+  margin-bottom: 12px;
 }
 </style>
