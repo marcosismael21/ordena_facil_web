@@ -8,8 +8,8 @@
 
         <!-- Grid de pedidos -->
         <v-row>
-            <v-col v-for="pedido in pedidosPendientes" :key="pedido.id" cols="12" md="6" lg="4">
-                <v-card class="order-card">
+            <v-col v-for="pedido in pedidosPendientes" :key="pedido.id" cols="12" md="6" lg="4" class="d-flex">
+                <v-card class="order-card w-100">
                     <v-card-title class="d-flex justify-space-between align-center pa-4">
                         <div>
                             <span class="text-h6">Orden #{{ pedido.numeroOrden }}</span>
@@ -22,7 +22,7 @@
 
                     <v-divider></v-divider>
 
-                    <v-card-text class="pa-4">
+                    <v-card-text class="pa-4 order-content">
                         <v-list density="compact">
                             <v-list-item v-for="detalle in pedido.detalles" :key="detalle.id" class="mb-2">
                                 <template v-slot:prepend>
@@ -98,7 +98,7 @@ const conectarSocket = () => {
 
     const socketUrl = 'http://localhost:3004';
     console.log('Conectando a:', socketUrl);
-    
+
     socket.value = io(socketUrl, {
         transports: ['websocket'],
         upgrade: false,
@@ -118,9 +118,34 @@ const conectarSocket = () => {
 
     socket.value.on('nuevoPedido', (data) => {
         console.log('Nuevo pedido recibido en cliente:', data);
-        if (data.success && data.data) {
+        if (data.success && data.data && data.data.estadoId === 2) {
             pedidosPendientes.value.unshift(data.data);
             mostrarNotificacion('Nuevo pedido recibido', 'info');
+        }
+    });
+
+    socket.value.on('actualizacionOrden', (data) => {
+        console.log('Actualización de orden recibida en cocina:', data);
+
+        // Si el estado es 3, quitarlo de la vista (ya lo marcamos como completado)
+        if (data.estado === 3) {
+            const index = pedidosPendientes.value.findIndex(p => p.id === data.id);
+            if (index !== -1) {
+                pedidosPendientes.value.splice(index, 1);
+                mostrarNotificacion('Pedido completado', 'success');
+            }
+        }
+        // Si el estado es 2, verificar si debemos agregarlo
+        else if (data.estado === 2 && data.pedido) {
+            const index = pedidosPendientes.value.findIndex(p => p.id === data.id);
+            if (index === -1) {
+                // Pedido nuevo para cocina
+                pedidosPendientes.value.unshift(data.pedido);
+                mostrarNotificacion('Nuevo pedido recibido', 'info');
+            } else {
+                // Actualizar pedido existente
+                pedidosPendientes.value[index] = data.pedido;
+            }
         }
     });
 
@@ -183,11 +208,21 @@ onUnmounted(() => {
 <style scoped>
 .order-card {
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 350px;
 }
 
 .order-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 4px 25px 0 rgba(0, 0, 0, 0.1);
+}
+
+.order-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 400px;
 }
 
 .v-list-item {

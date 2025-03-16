@@ -23,8 +23,8 @@
                   <span>${{ pedido.total }}</span>
                 </div>
                 <div class="text-caption mt-1">
-                  <v-chip size="x-small" color="warning" class="ml-2">
-                    Pendiente
+                  <v-chip size="x-small" :color="getEstadoColor(pedido.estadoId)" class="ml-2">
+                    {{ getEstadoTexto(pedido.estadoId) }}
                   </v-chip>
                 </div>
               </v-card-item>
@@ -155,8 +155,8 @@
                 </div>
               </v-card-text>
               <v-card-actions class="pa-0">
-                <v-btn block color="success" size="large" @click="sendToKitchen">
-                  {{ isExistingOrder ? 'Enviar a Cocina' : 'Crear Pedido' }}
+                <v-btn block :color="getButtonColor(formData.estadoId)" size="large" @click="sendToKitchen">
+                  {{ getButtonText(formData.estadoId) }}
                 </v-btn>
               </v-card-actions>
             </v-card>
@@ -258,6 +258,7 @@ const socket = ref(null)
 
 const formData = ref({
   //valores de pedido
+  estadoId: 2,
   clienteId: 1,
   colaboradorId: colaboradorId,
   tipoPedidoId: 1,
@@ -284,6 +285,7 @@ const nuevoCliente = ref({
 
 const resetForm = () => {
   formData.value = {
+    estadoId: 2,
     clienteId: 1,
     colaboradorId: colaboradorId,
     tipoPedidoId: 1,
@@ -339,6 +341,43 @@ const toggleFilter = (tipoPlatilloId) => {
   }
 }
 
+const getEstadoColor = (estadoId) => {
+  switch (estadoId) {
+    case 1: return 'grey';
+    case 2: return 'warning';
+    case 3: return 'success';
+    case 6: return 'primary';
+    default: return 'grey';
+  }
+}
+
+const getEstadoTexto = (estadoId) => {
+  switch (estadoId) {
+    case 1: return 'Pendiente';
+    case 2: return 'En cocina';
+    case 3: return 'Listo';
+    case 6: return 'Finalizado';
+    default: return 'Desconocido';
+  }
+}
+
+const getButtonColor = (estadoId) => {
+  switch (estadoId) {
+    case 1: return 'primary';
+    case 2: return 'primary';
+    case 3: return 'success';
+    default: return 'primary';
+  }
+}
+
+const getButtonText = (estadoId) => {
+  switch (estadoId) {
+    case 1: return 'Enviar a Cocina';
+    case 2: return 'Crear Pedido';
+    case 3: return 'Finalizar y Cobrar';
+    default: return isExistingOrder.value ? 'Actualizar Pedido' : 'Crear Pedido';
+  }
+}
 // Calculate totals
 const subtotal = computed(() => {
   return orderItems.value.reduce((acc, item) =>
@@ -393,6 +432,7 @@ const selectPendingOrder = async (pedido) => {
     if (response.success && response.data && response.data.length > 0) {
       const orderDetail = response.data[0]
 
+      formData.value.estadoId = orderDetail.estadoId
       formData.value.clienteId = orderDetail.clienteId
 
       formData.value.tipoPedidoId = orderDetail.tipoPedidoId
@@ -600,7 +640,7 @@ const sendToKitchen = async () => {
     if (response.success) {
       snackbarColor.value = "success"
       snackbarMessage.value = isExistingOrder.value
-        ? "Pedido enviado a cocina exitosamente"
+        ? response.message
         : "Pedido creado exitosamente"
       isSnackbarVisible.value = true
 
@@ -786,6 +826,44 @@ const conectarSocket = () => {
       isSnackbarVisible.value = true;
     }
   })
+
+  socket.value.on('actualizacionOrden', (data) => {
+    console.log('Actualización de orden recibida:', data);
+
+    // Buscar el pedido en la lista de pendientes
+    const index = pedidosPendientes.value.findIndex(p => p.id === data.id);
+
+    if (index !== -1) {
+      // Actualizar el estado del pedido
+      pedidosPendientes.value[index].estadoId = data.estado;
+
+      // Mostrar notificación
+      snackbarColor.value = "info";
+      snackbarMessage.value = `Pedido #${pedidosPendientes.value[index].numeroOrden} actualizado a ${getEstadoTexto(data.estado)}`;
+      isSnackbarVisible.value = true;
+
+      // Si el pedido ha sido finalizado (estado 6), quitarlo de la lista
+      if (data.estado === 6) {
+        pedidosPendientes.value.splice(index, 1);
+      }
+
+      // Si el pedido es el que está seleccionado actualmente, actualizar también esa vista
+      if (currentOrderId.value === data.id) {
+        formData.value.estadoId = data.estado;
+      }
+    } else if (data.pedido) {
+      // Eliminar el pedido anterior si existe en la lista
+      pedidosPendientes.value = pedidosPendientes.value.filter(p => p.id !== data.pedido.id);
+
+      // Si el pedido no está en la lista pero tenemos sus datos, agregarlo
+      pedidosPendientes.value.unshift(data.pedido);
+
+      // Mostrar notificación
+      snackbarColor.value = "info";
+      snackbarMessage.value = `Nuevo pedido recibido: ${data.pedido.numeroOrden}`;
+      isSnackbarVisible.value = true;
+    }
+  });
 
   socket.value.on('error', (error) => {
     console.error('Error de socket:', error)
