@@ -17,10 +17,15 @@
               <v-card-item>
                 <v-card-title class="text-subtitle-2">#{{ pedido.numeroOrden }}</v-card-title>
                 <v-card-subtitle class="text-caption">Cliente: {{ pedido.nombreCliente }}</v-card-subtitle>
-                <v-card-subtitle class="text-caption">DNI: {{ pedido.dni }}</v-card-subtitle>
+                <v-card-subtitle class="text-caption">DNI: {{ pedido.dni || 'N/A' }}</v-card-subtitle>
                 <div class="text-caption d-flex justify-space-between">
                   <span>Total:</span>
                   <span>${{ pedido.total }}</span>
+                </div>
+                <div class="text-caption mt-1">
+                  <v-chip size="x-small" color="warning" class="ml-2">
+                    Pendiente
+                  </v-chip>
                 </div>
               </v-card-item>
             </v-card>
@@ -86,8 +91,8 @@
                 <div class="text-subtitle-2 mb-1">Cliente</div>
                 <v-autocomplete v-model="formData.clienteId" :items="clientes" item-title="nombres" item-value="id"
                   placeholder="Seleccionar cliente" density="compact" hide-details class="mb-2"
-                  :search-input.sync="searchCliente" :filter="filterClientes"
-                  @update:search="searchCliente = $event" bg-color="transparent">
+                  :search-input.sync="searchCliente" :filter="filterClientes" @update:search="searchCliente = $event"
+                  bg-color="transparent">
                   <template v-slot:prepend-inner>
                     <v-icon size="small">mdi-account</v-icon>
                   </template>
@@ -151,7 +156,7 @@
               </v-card-text>
               <v-card-actions class="pa-0">
                 <v-btn block color="success" size="large" @click="sendToKitchen">
-                  Mandar a Cocina
+                  {{ isExistingOrder ? 'Enviar a Cocina' : 'Crear Pedido' }}
                 </v-btn>
               </v-card-actions>
             </v-card>
@@ -220,6 +225,8 @@
 </template>
 
 <script setup>
+import { io } from 'socket.io-client'
+
 const runtimeConfig = useRuntimeConfig()
 const tokenCookie = useCookie('token')
 const colaboradorIdCookie = useCookie('colaboradorId')
@@ -241,9 +248,13 @@ const formNewClient = ref(null)
 const clientes = ref([])
 const tipoPlatillos = ref([])
 const selectedTipoPlatillo = ref(null)
+const isExistingOrder = ref(false)
+const currentOrderId = ref(null)
 
 const orderItems = ref([])
 const discount = ref(0)
+
+const socket = ref(null)
 
 const formData = ref({
   //valores de pedido
@@ -288,6 +299,8 @@ const resetForm = () => {
   }
   orderItems.value = []
   discount.value = 0
+  isExistingOrder.value = false
+  currentOrderId.value = null
 }
 
 const resetFormCliente = () => {
@@ -361,10 +374,77 @@ const filterClientes = (item, query) => {
 }
 
 const selectPendingOrder = async (pedido) => {
-  // Por ahora solo mostraremos un mensaje
-  snackbarColor.value = "info"
-  snackbarMessage.value = `Seleccionaste la orden #${pedido.numeroOrden}`
-  isSnackbarVisible.value = true
+  try {
+    snackbarColor.value = "info"
+    snackbarMessage.value = `Cargando detalles de la orden #${pedido.numeroOrden}...`
+    isSnackbarVisible.value = true
+
+    orderItems.value = []
+
+    const response = await $fetch(runtimeConfig.public.apiBase + `/pedido/detalle/${pedido.id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": runtimeConfig.public.apiKey,
+        "Authorization": `Bearer ${token}`,
+      }
+    })
+
+    if (response.success && response.data && response.data.length > 0) {
+      const orderDetail = response.data[0]
+
+      formData.value.clienteId = orderDetail.clienteId
+
+      formData.value.tipoPedidoId = orderDetail.tipoPedidoId
+
+      if (orderDetail.direccionId) {
+        formData.value.direccionId = orderDetail.direccionId
+      }
+
+      discount.value = parseFloat(orderDetail.descuento) || 0
+      formData.value.descuentoPedido = discount.value
+
+      formData.value.platilloIds = []
+      formData.value.cantidadPedidoDetalles = []
+      formData.value.precioUnitarioPedidoDetalles = []
+      formData.value.contExtras = []
+
+      const platilloIds = orderDetail.platilloIds.split(',')
+      const platilloNombres = orderDetail.platilloNombres.split(',')
+      const cantidades = orderDetail.cantidades.split(',')
+      const preciosUnitarios = orderDetail.preciosUnitarios.split(',')
+      const subtotalesDetalle = orderDetail.subtotalesDetalle.split(',')
+      const contieneExtras = orderDetail.contieneExtras ? orderDetail.contieneExtras.split(',') : []
+
+      for (let i = 0; i < platilloIds.length; i++) {
+        formData.value.platilloIds.push(parseInt(platilloIds[i]))
+        formData.value.cantidadPedidoDetalles.push(parseInt(cantidades[i]))
+        formData.value.precioUnitarioPedidoDetalles.push(parseFloat(preciosUnitarios[i]))
+        formData.value.contExtras.push(contieneExtras[i] === "1" ? 1 : 0)
+
+        orderItems.value.push({
+          id: parseInt(platilloIds[i]),
+          nombre: platilloNombres[i],
+          precio: parseFloat(preciosUnitarios[i]),
+          quantity: parseInt(cantidades[i])
+        })
+      }
+
+      isExistingOrder.value = true
+      currentOrderId.value = pedido.id
+
+      snackbarColor.value = "success"
+      snackbarMessage.value = `Orden #${pedido.numeroOrden} cargada correctamente`
+      isSnackbarVisible.value = true
+    } else {
+      throw new Error(response.message || "No se pudieron cargar los detalles del pedido")
+    }
+  } catch (error) {
+    console.error("Error al cargar los detalles del pedido:", error)
+    snackbarColor.value = "error"
+    snackbarMessage.value = error.data.message || "Error al cargar los detalles del pedido"
+    isSnackbarVisible.value = true
+  }
 }
 
 const addToOrder = (item) => {
@@ -473,8 +553,70 @@ const handleCreateClient = async () => {
   }
 }
 
-const sendToKitchen = () => {
-  handleCreate()
+const sendToKitchen = async () => {
+  //handleCreate()
+  if (orderItems.value.length === 0) {
+    snackbarColor.value = "error"
+    snackbarMessage.value = "Debe agregar al menos un platillo a la orden"
+    isSnackbarVisible.value = true
+    return
+  }
+
+  if (!formData.value.tipoPedidoId) {
+    snackbarColor.value = "error"
+    snackbarMessage.value = "Debe seleccionar un tipo de pedido"
+    isSnackbarVisible.value = true
+    return
+  }
+
+  if (!formData.value.clienteId) {
+    snackbarColor.value = "error"
+    snackbarMessage.value = "Debe seleccionar un cliente"
+    isSnackbarVisible.value = true
+    return
+  }
+
+  try {
+    formData.value.descuentoPedido = discount.value
+
+    let url = runtimeConfig.public.apiBase + "/pedido"
+    let method = "POST"
+
+    if (isExistingOrder.value && currentOrderId.value) {
+      url = runtimeConfig.public.apiBase + `/pedido/${currentOrderId.value}/enviar-cocina`
+      method = "PUT"
+    }
+
+    const response = await $fetch(url, {
+      method: method,
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": runtimeConfig.public.apiKey,
+        "Authorization": `Bearer ${token}`,
+      },
+      body: formData.value
+    })
+
+    if (response.success) {
+      snackbarColor.value = "success"
+      snackbarMessage.value = isExistingOrder.value
+        ? "Pedido enviado a cocina exitosamente"
+        : "Pedido creado exitosamente"
+      isSnackbarVisible.value = true
+
+      resetForm()
+      isExistingOrder.value = false
+      currentOrderId.value = null
+
+      await refreshPendingOrders()
+    } else {
+      throw new Error(response.message)
+    }
+  } catch (e) {
+    snackbarColor.value = "error"
+    snackbarMessage.value = e.data?.message || e.message || "Error al procesar el pedido"
+    isSnackbarVisible.value = true
+  }
 }
 
 const incrementQuantity = (index) => {
@@ -555,7 +697,7 @@ const getDataSelect = async () => {
       }
     })
 
-    const getPedidoPendiente = await $fetch(runtimeConfig.public.apiBase + "/pedido", {
+    const getPedidoPendiente = await $fetch(runtimeConfig.public.apiBase + "/cocina/pedidos-pendientes", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -609,9 +751,53 @@ Object.entries(dataRefs).forEach(([key, ref]) => {
   }, { deep: true })
 })
 
+const conectarSocket = () => {
+  console.log('Intentando conectar socket para caja...')
+
+  const socketUrl = 'http://localhost:3004'
+  console.log('Conectando a:', socketUrl)
+
+  socket.value = io(socketUrl, {
+    transports: ['websocket'],
+    upgrade: false,
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000
+  })
+
+  socket.value.on('connect', () => {
+    console.log('Socket conectado exitosamente!');
+  })
+
+  socket.value.on('connect_error', (error) => {
+    console.error('Error de conexión socket:', error);
+    snackbarColor.value = "error";
+    snackbarMessage.value = "Error de conexión con el servidor";
+    isSnackbarVisible.value = true;
+  })
+
+  socket.value.on('nuevoPedido', (data) => {
+    console.log('Nuevo pedido recibido en cliente caja:', data);
+    if (data.success && data.data) {
+      // Actualizar la lista de pedidos pendientes
+      refreshPendingOrders();
+      snackbarColor.value = "info";
+      snackbarMessage.value = "Nuevo pedido recibido";
+      isSnackbarVisible.value = true;
+    }
+  })
+
+  socket.value.on('error', (error) => {
+    console.error('Error de socket:', error)
+    snackbarColor.value = "error"
+    snackbarMessage.value = error.data.message || 'Error en la conexión'
+    isSnackbarVisible.value = true
+  })
+}
+
 const refreshPendingOrders = async () => {
   try {
-    const response = await $fetch(runtimeConfig.public.apiBase + "/pedido", {
+    const response = await $fetch(runtimeConfig.public.apiBase + "/cocina/pedidos-pendientes", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -619,9 +805,17 @@ const refreshPendingOrders = async () => {
         "Authorization": `Bearer ${token}`,
       }
     });
-    pedidosPendientes.value = response.data;
+
+    if (response.success) {
+      pedidosPendientes.value = response.data;
+    } else {
+      throw new Error(response.message);
+    }
   } catch (e) {
     console.error('Error al actualizar pedidos pendientes:', e);
+    snackbarColor.value = "error";
+    snackbarMessage.value = "Error al cargar pedidos pendientes";
+    isSnackbarVisible.value = true;
   }
 }
 
@@ -651,6 +845,13 @@ await getDataSelect()
 onMounted(() => {
   getData()
   getClientes()
+  conectarSocket()
+})
+
+onUnmounted(() => {
+  if (socket.value) {
+    socket.value.disconnect();
+  }
 })
 </script>
 

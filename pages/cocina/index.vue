@@ -77,7 +77,7 @@ const snackbar = ref({
 // Cargar pedidos iniciales
 const cargarPedidosPendientes = async () => {
     try {
-        const response = await fetch(runtimeConfig.public.apiBase + '/cocina/pedidos-pendientes', {
+        const response = await fetch(runtimeConfig.public.apiBase + '/cocina/pedidos-cocina', {
             headers: {
                 'x-api-key': runtimeConfig.public.apiKey,
                 'Authorization': `Bearer ${useCookie('token').value}`
@@ -141,7 +141,7 @@ const completarPedido = async (pedidoId) => {
                 'x-api-key': runtimeConfig.public.apiKey,
                 'Authorization': `Bearer ${useCookie('token').value}`
             },
-            body: JSON.stringify({ estado: 2 }) // 2 = Completado
+            body: JSON.stringify({ estado: 3 })
         })
 
         const data = await response.json()
