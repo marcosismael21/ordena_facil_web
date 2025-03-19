@@ -61,6 +61,11 @@
 </template>
 
 <script setup>
+definePageMeta({
+  layout: 'default',
+  middleware: ['auth', 'role'],
+  requiredRoles: [5]
+})
 import { ref, onMounted, onUnmounted } from 'vue'
 import { io } from 'socket.io-client'
 

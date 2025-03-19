@@ -225,6 +225,13 @@
 </template>
 
 <script setup>
+
+definePageMeta({
+  layout: 'default',
+  middleware: ['auth', 'role'],
+  requiredRoles: [1]
+})
+
 import { io } from 'socket.io-client'
 
 const runtimeConfig = useRuntimeConfig()

@@ -1,5 +1,5 @@
 <template>
-  <v-app :theme="'light'"> <!-- Forzamos el tema claro en el layout de login -->
+  <v-app :theme="'light'"> 
     <v-main>
       <slot />
     </v-main>

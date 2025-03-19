@@ -113,13 +113,27 @@ const handleLogin = async () => {
       const colaboradorId = useCookie('colaboradorId')
       colaboradorId.value = response.userData.id
 
+      const rolId = useCookie('rolId')
+      rolId.value = response.userData.idrol
+
       // Mostrar mensaje de éxito
       snackbarColor.value = "success"
       snackbarMessage.value = "¡Inicio de sesión exitoso!"
       isSnackbarVisible.value = true
 
       // Redireccionar
-      await router.replace(route.query.to ?? "/caja")
+      if (rolId.value == 2) {
+        await router.replace(route.query.to ?? "/colaborador")
+      }
+
+      if (rolId.value == 1) {
+        await router.replace(route.query.to ?? "/caja")
+      }
+
+      if (rolId.value == 5) {
+        await router.replace(route.query.to ?? "/cocina")
+      }
+
     } else {
       snackbarColor.value = "error"
       snackbarMessage.value = response.mensage || "Error al iniciar sesión"

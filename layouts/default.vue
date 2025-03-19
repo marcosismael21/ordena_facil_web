@@ -13,8 +13,8 @@
         <v-list-item v-for="item in regularMenuItems" :key="item.title" :prepend-icon="item.icon" :title="item.title"
           :to="item.to" :value="item.title.toLowerCase()"></v-list-item>
 
-        <!-- Grupo de Parámetros -->
-        <v-list-group value="Parametros">
+        <!-- Grupo de Parámetros - solo visible para administradores -->
+        <v-list-group v-if="showParametersGroup" value="Parametros">
           <template v-slot:activator="{ props }">
             <v-list-item v-bind="props" prepend-icon="mdi-cog" title="Parámetros" class="parameter-group"></v-list-item>
           </template>
@@ -64,6 +64,7 @@ import { onMounted } from 'vue'
 const runtimeConfig = useRuntimeConfig()
 const router = useRouter()
 const theme = useTheme()
+const rolId = useCookie('rolId')
 
 const handleLogout = async () => {
   try {
@@ -112,20 +113,44 @@ onMounted(() => {
   }
 })
 
-const regularMenuItems = [
-  { title: 'Caja', to: '/caja', icon: 'mdi-cash-register' },
-  { title: 'Inventario', to: '/inventario', icon: 'mdi-silverware' },
-  { title: 'Cocina', to: '/cocina', icon: 'mdi-food' },
-  { title: 'Menú', to: '/menu', icon: 'mdi-food' },
-  { title: 'Colaboradores', to: '/colaborador', icon: 'mdi-account-multiple' },
-]
+const regularMenuItems = computed(() => {
+  const items = []
 
-const parameterMenuItems = [
-  { title: 'Tipos de Platillos', to: '/tipoPlatillo', icon: 'mdi-food-fork-drink' },
-  { title: 'Proveedores', to: '/proveedor', icon: 'mdi-truck-delivery' },
-  { title: 'Categorías de Prouductos', to: '/categoria', icon: 'mdi-shape-outline' },
-  { title: 'Tipos de Medidas', to: '/tipoMedida', icon: 'mdi-scale' },
-]
+  if ([1].includes(parseInt(rolId.value))) {
+    items.push({ title: 'Caja', to: '/caja', icon: 'mdi-cash-register' })
+  }
+
+  if ([2].includes(parseInt(rolId.value))) {
+    items.push({ title: 'Inventario', to: '/inventario', icon: 'mdi-silverware' })
+  }
+
+  if ([5].includes(parseInt(rolId.value))) {
+    items.push({ title: 'Cocina', to: '/cocina', icon: 'mdi-food' })
+  }
+
+  if ([2].includes(parseInt(rolId.value))) {
+    items.push({ title: 'Menú', to: '/menu', icon: 'mdi-food' })
+  }
+
+  if ([2].includes(parseInt(rolId.value))) {
+    items.push({ title: 'Colaboradores', to: '/colaborador', icon: 'mdi-account-multiple' })
+  }
+
+  return items
+})
+
+const parameterMenuItems = computed(() => {
+  if (parseInt(rolId.value) !== 2) {
+    return []
+  }
+
+  return [
+    { title: 'Tipos de Platillos', to: '/tipoPlatillo', icon: 'mdi-food-fork-drink' },
+    { title: 'Proveedores', to: '/proveedor', icon: 'mdi-truck-delivery' },
+    { title: 'Categorías de Prouductos', to: '/categoria', icon: 'mdi-shape-outline' },
+    { title: 'Tipos de Medidas', to: '/tipoMedida', icon: 'mdi-scale' },
+  ]
+})
 
 const parameterLogOutItems = [
   {
@@ -141,6 +166,10 @@ const links = [
   'Servicios',
   'Contacto'
 ]
+
+const showParametersGroup = computed(() => {
+  return parseInt(rolId.value) === 2
+})
 </script>
 
 <style scoped>

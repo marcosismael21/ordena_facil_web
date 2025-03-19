@@ -27,4 +27,7 @@ export default defineNuxtConfig({
       apiKey: "tu_api_key_para_web",
     },
   },
+  routeRules: {
+    '/login': { middleware: false }
+  }
 });

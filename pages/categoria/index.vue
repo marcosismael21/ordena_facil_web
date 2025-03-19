@@ -136,6 +136,11 @@
 
 
 <script setup>
+definePageMeta({
+  layout: 'default',
+  middleware: ['auth', 'role'],
+  requiredRoles: [2]
+})
 const runtimeConfig = useRuntimeConfig()
 const tokenCookie = useCookie('token')
 const token = tokenCookie.value
