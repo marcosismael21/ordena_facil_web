@@ -123,7 +123,7 @@ const handleLogin = async () => {
 
       // Redireccionar
       if (rolId.value == 2) {
-        await router.replace(route.query.to ?? "/colaborador")
+        await router.replace(route.query.to ?? "/menu")
       }
 
       if (rolId.value == 1) {

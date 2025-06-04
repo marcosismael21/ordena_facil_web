@@ -66,7 +66,7 @@
                   </v-img>
                   <v-card-text>
                     <div class="text-caption mb-1">{{ item.descripcion }}</div>
-                    <div class="text-h6 font-weight-bold">${{ item.precio }}</div>
+                    <div class="text-h6 font-weight-bold">L. {{ item.precio }}</div>
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -227,7 +227,7 @@
 <script setup>
 
 definePageMeta({
-  layout: 'default',
+  layout: 'caja',
   middleware: ['auth', 'role'],
   requiredRoles: [1]
 })

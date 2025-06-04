@@ -76,7 +76,11 @@ const handleLogout = async () => {
       }
     })
     const token = useCookie('token')
+    const irdol = useCookie('rolId')
+    const token2 = useCookie('colaboradorId')
     token.value = null
+    token2.value = null
+    irdol.value = null
     if (process.client) {
       window.localStorage.removeItem('theme')
     }
