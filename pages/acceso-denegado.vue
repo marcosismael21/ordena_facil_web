@@ -6,3 +6,9 @@
       <v-btn color="primary" @click="$router.push('/login')">Volver al inicio</v-btn>
     </div>
   </template>
+
+<script setup>
+definePageMeta({
+  layout: 'login',
+})
+</script>

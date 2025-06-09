@@ -62,7 +62,7 @@
 
 <script setup>
 definePageMeta({
-  layout: 'default',
+  layout: 'caja',
   middleware: ['auth', 'role'],
   requiredRoles: [5]
 })

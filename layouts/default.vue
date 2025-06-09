@@ -2,8 +2,7 @@
   <v-layout class="rounded rounded-md">
     <v-navigation-drawer expand-on-hover rail>
       <v-list>
-        <v-list-item prepend-avatar="https://randomuser.me/api/portraits/women/85.jpg" title="Sandra Adams"
-          subtitle="sandra_a88@gmail.com"></v-list-item>
+        <v-list-item></v-list-item>
       </v-list>
 
       <v-divider></v-divider>
@@ -11,7 +10,7 @@
       <v-list density="compact" nav>
         <!-- Menús normales -->
         <v-list-item v-for="item in regularMenuItems" :key="item.title" :prepend-icon="item.icon" :title="item.title"
-          :to="item.to" :value="item.title.toLowerCase()"></v-list-item>
+                     :to="item.to" :value="item.title.toLowerCase()"></v-list-item>
 
         <!-- Grupo de Parámetros - solo visible para administradores -->
         <v-list-group v-if="showParametersGroup" value="Parametros">
@@ -20,7 +19,8 @@
           </template>
 
           <v-list-item v-for="subItem in parameterMenuItems" :key="subItem.title" :prepend-icon="subItem.icon"
-            :title="subItem.title" :to="subItem.to" :value="subItem.title.toLowerCase()" class="parameter-item">
+                       :title="subItem.title" :to="subItem.to" :value="subItem.title.toLowerCase()"
+                       class="parameter-item">
             <template v-slot:prepend>
               <v-icon size="20" class="me-2">{{ subItem.icon }}</v-icon>
             </template>
@@ -38,13 +38,13 @@
             </v-list-item-title>
           </v-list-item>
           <v-list-item v-for="item in parameterLogOutItems" :key="item.title" :prepend-icon="item.icon"
-            :title="item.title" :value="item.title.toLowerCase()" @click="handleLogout"></v-list-item>
+                       :title="item.title" :value="item.title.toLowerCase()" @click="handleLogout"></v-list-item>
         </div>
       </template>
     </v-navigation-drawer>
 
     <v-app-bar :elevation="1">
-      <v-app-bar-title>Mi Aplicación</v-app-bar-title>
+      <v-app-bar-title>Ordena Fácil</v-app-bar-title>
       <v-spacer></v-spacer>
       <v-btn class="mx-2" icon variant="text" @click="toggleTheme">
         <v-icon>{{ theme.global.current.value.dark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
@@ -52,15 +52,16 @@
     </v-app-bar>
 
     <v-main>
-      <slot />
+      <slot/>
     </v-main>
 
   </v-layout>
 </template>
 
 <script setup>
-import { useTheme } from 'vuetify'
-import { onMounted } from 'vue'
+import {useTheme} from 'vuetify'
+import {onMounted} from 'vue'
+
 const runtimeConfig = useRuntimeConfig()
 const router = useRouter()
 const theme = useTheme()
@@ -121,23 +122,23 @@ const regularMenuItems = computed(() => {
   const items = []
 
   if ([1].includes(parseInt(rolId.value))) {
-    items.push({ title: 'Caja', to: '/caja', icon: 'mdi-cash-register' })
+    items.push({title: 'Caja', to: '/caja', icon: 'mdi-cash-register'})
   }
 
   if ([2].includes(parseInt(rolId.value))) {
-    items.push({ title: 'Inventario', to: '/inventario', icon: 'mdi-silverware' })
+    items.push({title: 'Inventario', to: '/inventario', icon: 'mdi-silverware'})
   }
 
   if ([5].includes(parseInt(rolId.value))) {
-    items.push({ title: 'Cocina', to: '/cocina', icon: 'mdi-food' })
+    items.push({title: 'Cocina', to: '/cocina', icon: 'mdi-food'})
   }
 
   if ([2].includes(parseInt(rolId.value))) {
-    items.push({ title: 'Menú', to: '/menu', icon: 'mdi-food' })
+    items.push({title: 'Menú', to: '/menu', icon: 'mdi-food'})
   }
 
   if ([2].includes(parseInt(rolId.value))) {
-    items.push({ title: 'Colaboradores', to: '/colaborador', icon: 'mdi-account-multiple' })
+    items.push({title: 'Colaboradores', to: '/colaborador', icon: 'mdi-account-multiple'})
   }
 
   return items
@@ -149,10 +150,11 @@ const parameterMenuItems = computed(() => {
   }
 
   return [
-    { title: 'Tipos de Platillos', to: '/tipoPlatillo', icon: 'mdi-food-fork-drink' },
-    { title: 'Proveedores', to: '/proveedor', icon: 'mdi-truck-delivery' },
-    { title: 'Categorías de Prouductos', to: '/categoria', icon: 'mdi-shape-outline' },
-    { title: 'Tipos de Medidas', to: '/tipoMedida', icon: 'mdi-scale' },
+    {title: 'Tipos de Platillos', to: '/tipoPlatillo', icon: 'mdi-food-fork-drink'},
+    {title: 'Proveedores', to: '/proveedor', icon: 'mdi-truck-delivery'},
+    {title: 'Categorías de Prouductos', to: '/categoria', icon: 'mdi-shape-outline'},
+    {title: 'Tipos de Medidas', to: '/tipoMedida', icon: 'mdi-scale'},
+    {title: 'Mesas', to: '/mesa', icon: 'mdi-table-chair'},
   ]
 })
 

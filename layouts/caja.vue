@@ -1,7 +1,7 @@
 <template>
   <v-layout class="rounded rounded-md">
     <v-app-bar :elevation="1">
-      <v-app-bar-title>Mi Aplicación</v-app-bar-title>
+      <v-app-bar-title>Ordena Fácil</v-app-bar-title>
       <v-spacer></v-spacer>
       <v-btn class="mx-2" icon variant="text" @click="toggleTheme">
         <v-icon>{{ theme.global.current.value.dark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
