@@ -121,6 +121,22 @@ const conectarSocket = () => {
         mostrarNotificacion('Error de conexión con el servidor', 'error');
     });
 
+  socket.value.on('nuevoPedido', (data) => {
+    console.log('Nuevo pedido recibido en cocina:', data);
+    if (data.success && data.data) {
+      // Si el pedido es para cocina (estado 2), agregarlo
+      if (data.data.estadoId === 2) {
+        // Verificar que no exista ya
+        const existe = pedidosPendientes.value.some(p => p.id === data.data.id);
+        if (!existe) {
+          pedidosPendientes.value.unshift(data.data);
+          mostrarNotificacion('Nuevo pedido recibido', 'info');
+        }
+      }
+    }
+  });
+
+    /*
     socket.value.on('nuevoPedido', (data) => {
         console.log('Nuevo pedido recibido en cliente:', data);
         if (data.success && data.data && data.data.estadoId === 2) {
@@ -128,7 +144,7 @@ const conectarSocket = () => {
             mostrarNotificacion('Nuevo pedido recibido', 'info');
         }
     });
-
+*/
     socket.value.on('actualizacionOrden', (data) => {
         console.log('Actualización de orden recibida en cocina:', data);
 
@@ -161,6 +177,7 @@ const conectarSocket = () => {
 };
 
 // Completar pedido
+/*
 const completarPedido = async (pedidoId) => {
     processingOrders.value.push(pedidoId)
     try {
@@ -187,6 +204,35 @@ const completarPedido = async (pedidoId) => {
     } finally {
         processingOrders.value = processingOrders.value.filter(id => id !== pedidoId)
     }
+}
+*/
+
+const completarPedido = async (pedidoId) => {
+  processingOrders.value.push(pedidoId)
+  try {
+    const response = await fetch(runtimeConfig.public.apiBase + `/pedido/${pedidoId}/enviar-cocina`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': runtimeConfig.public.apiKey,
+        'Authorization': `Bearer ${useCookie('token').value}`
+      },
+      body: JSON.stringify({ estadoId: 3 }) // Asegúrate que envíe estadoId, no estado
+    })
+
+    const data = await response.json()
+    if (data.success) {
+      mostrarNotificacion('Pedido completado exitosamente', 'success')
+      const index = pedidosPendientes.value.findIndex(p => p.id === pedidoId)
+      if (index !== -1) {
+        pedidosPendientes.value.splice(index, 1)
+      }
+    }
+  } catch (error) {
+    mostrarNotificacion('Error al completar el pedido', 'error')
+  } finally {
+    processingOrders.value = processingOrders.value.filter(id => id !== pedidoId)
+  }
 }
 
 const mostrarNotificacion = (text, color = 'success') => {

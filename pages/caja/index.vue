@@ -600,6 +600,7 @@ const handleCreateClient = async () => {
   }
 }
 
+/*
 const sendToKitchen = async () => {
   //handleCreate()
   if (orderItems.value.length === 0) {
@@ -649,6 +650,106 @@ const sendToKitchen = async () => {
       snackbarMessage.value = isExistingOrder.value
         ? response.message
         : "Pedido creado exitosamente"
+      isSnackbarVisible.value = true
+
+      resetForm()
+      isExistingOrder.value = false
+      currentOrderId.value = null
+
+      await refreshPendingOrders()
+    } else {
+      throw new Error(response.message)
+    }
+  } catch (e) {
+    snackbarColor.value = "error"
+    snackbarMessage.value = e.data?.message || e.message || "Error al procesar el pedido"
+    isSnackbarVisible.value = true
+  }
+}
+*/
+
+const sendToKitchen = async () => {
+  if (orderItems.value.length === 0) {
+    snackbarColor.value = "error"
+    snackbarMessage.value = "Debe agregar al menos un platillo a la orden"
+    isSnackbarVisible.value = true
+    return
+  }
+
+  if (!formData.value.tipoPedidoId) {
+    snackbarColor.value = "error"
+    snackbarMessage.value = "Debe seleccionar un tipo de pedido"
+    isSnackbarVisible.value = true
+    return
+  }
+
+  if (!formData.value.clienteId) {
+    snackbarColor.value = "error"
+    snackbarMessage.value = "Debe seleccionar un cliente"
+    isSnackbarVisible.value = true
+    return
+  }
+
+  try {
+    formData.value.descuentoPedido = discount.value
+
+    let url = runtimeConfig.public.apiBase + "/pedido"
+    let method = "POST"
+    let body = formData.value
+
+    if (isExistingOrder.value && currentOrderId.value) {
+      url = runtimeConfig.public.apiBase + `/pedido/${currentOrderId.value}/enviar-cocina`
+      method = "PUT"
+
+      // Determinar el siguiente estado según el estado actual
+      let nuevoEstado = formData.value.estadoId
+
+      switch(formData.value.estadoId) {
+        case 1: // Recibida -> En Cocina
+          nuevoEstado = 2
+          break
+        case 2: // En Cocina (mantener)
+          nuevoEstado = 2
+          break
+        case 3: // Listo -> Finalizado
+          nuevoEstado = 6
+          break
+        default:
+          nuevoEstado = formData.value.estadoId
+      }
+
+      body = { estadoId: nuevoEstado }
+    }
+
+    const response = await $fetch(url, {
+      method: method,
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": runtimeConfig.public.apiKey,
+        "Authorization": `Bearer ${token}`,
+      },
+      body: body
+    })
+
+    if (response.success) {
+      snackbarColor.value = "success"
+
+      // Mensaje personalizado según la acción
+      let mensaje = "Pedido creado exitosamente"
+      if (isExistingOrder.value) {
+        switch(formData.value.estadoId) {
+          case 1:
+            mensaje = "Pedido enviado a cocina"
+            break
+          case 3:
+            mensaje = "Pedido finalizado exitosamente"
+            break
+          default:
+            mensaje = response.message
+        }
+      }
+
+      snackbarMessage.value = mensaje
       isSnackbarVisible.value = true
 
       resetForm()
@@ -834,6 +935,7 @@ const conectarSocket = () => {
     }
   })
 
+  /*
   socket.value.on('actualizacionOrden', (data) => {
     console.log('Actualización de orden recibida:', data);
 
@@ -869,6 +971,52 @@ const conectarSocket = () => {
       snackbarColor.value = "info";
       snackbarMessage.value = `Nuevo pedido recibido: ${data.pedido.numeroOrden}`;
       isSnackbarVisible.value = true;
+    }
+  });
+*/
+
+  socket.value.on('actualizacionOrden', (data) => {
+    console.log('Actualización de orden recibida:', data);
+
+    // Buscar el pedido en la lista de pendientes
+    const index = pedidosPendientes.value.findIndex(p => p.id === data.id);
+
+    if (index !== -1) {
+      // Pedido encontrado, actualizarlo
+      if (data.pedido) {
+        // Reemplazar con los datos completos
+        pedidosPendientes.value[index] = data.pedido;
+      } else {
+        // Solo actualizar el estado
+        pedidosPendientes.value[index].estadoId = data.estado;
+      }
+
+      // Mostrar notificación
+      snackbarColor.value = "info";
+      snackbarMessage.value = `Pedido #${pedidosPendientes.value[index].numeroOrden} actualizado a ${getEstadoTexto(data.estado)}`;
+      isSnackbarVisible.value = true;
+
+      // Si el pedido ha sido finalizado (estado 6), quitarlo de la lista
+      if (data.estado === 6) {
+        setTimeout(() => {
+          pedidosPendientes.value.splice(index, 1);
+        }, 1000);
+      }
+
+      // Si el pedido es el que está seleccionado actualmente, actualizar también esa vista
+      if (currentOrderId.value === data.id) {
+        formData.value.estadoId = data.estado;
+      }
+    } else if (data.pedido && data.estado === 2) {
+      // Solo agregar a la lista si es un pedido nuevo en estado "En Cocina" (2)
+      // y NO está ya en la lista
+      const yaExiste = pedidosPendientes.value.some(p => p.id === data.id);
+      if (!yaExiste) {
+        pedidosPendientes.value.unshift(data.pedido);
+        snackbarColor.value = "info";
+        snackbarMessage.value = `Nuevo pedido recibido: ${data.pedido.numeroOrden}`;
+        isSnackbarVisible.value = true;
+      }
     }
   });
 
