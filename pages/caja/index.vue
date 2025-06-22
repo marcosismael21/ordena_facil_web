@@ -55,18 +55,15 @@
             </v-row>
           </div>
 
-          <div class="flex-grow-1 overflow-y-auto px-2 ">
+          <div class="flex-grow-1 overflow-y-auto px-2">
             <v-row>
               <v-col v-for="item in filteredItems" :key="item.id" cols="12" sm="6">
                 <v-card @click="addToOrder(item)" class="h-100" elevation="2" hover>
-                  <v-img :src="item.imageUrl" height="250" cover class="align-end">
-                    <v-card-title class="text-white bg-black bg-opacity-50 px-4 py-2">
-                      {{ item.nombre }}
-                    </v-card-title>
-                  </v-img>
-                  <v-card-text>
-                    <div class="text-caption mb-1">{{ item.descripcion }}</div>
-                    <div class="text-h6 font-weight-bold">L. {{ item.precio }}</div>
+                  <v-img :src="item.imageUrl" height="200" contain></v-img>
+                  <v-card-text class="pb-2">
+                    <div class="text-h6 font-weight-bold mb-2">{{ item.nombre }}</div>
+                    <div class="text-body-2 text-grey-darken-1 mb-2">{{ item.descripcion }}</div>
+                    <div class="text-h6 font-weight-bold text-primary">L. {{ item.precio }}</div>
                   </v-card-text>
                 </v-card>
               </v-col>
