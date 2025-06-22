@@ -187,8 +187,8 @@ const itemsBread = ref([
 ])
 
 const estadoOptions = [
-    { descripcion: "Activo", value: 1 },
-    { descripcion: "Inactivo", value: 0 },
+    { descripcion: "Activo", value: true },
+    { descripcion: "Inactivo", value: false },
 ]
 
 const getRoles = async () => {
