@@ -31,6 +31,7 @@ const myCustomLightTheme = {
     info: "#2196F3",
     success: "#4CAF50",
     warning: "#FB8C00",
+    "section-background": ' #f0feff ',
   },
   variables: {
     "border-color": "#000000",
@@ -49,5 +50,6 @@ const myCustomLightTheme = {
     "theme-on-kbd": "#FFFFFF",
     "theme-code": "#F5F5F5",
     "theme-on-code": "#000000",
+    "section-background": '#86b0bf'
   },
 };
